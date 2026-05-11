@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Cars</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg: #f4f4f6;
+      --card: #fff;
+      --border: #e5e5ea;
+      --text: #1a1a1a;
+      --muted: #6b6b73;
+      --accent: #1a1a1a;
+      --shadow: 0 2px 12px rgba(0,0,0,0.06);
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      min-height: 100vh;
+      color: var(--text);
+      padding: 0 0 6rem;
+    }
+    .header {
+      background: var(--card);
+      padding: 1.5rem 1.25rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .title { font-size: 1.5rem; font-weight: 700; }
+    .subtitle { color: var(--muted); font-size: 0.92rem; margin-top: 0.25rem; }
+    .section { padding: 1rem 1.25rem; }
+    .section-title {
+      font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--muted); margin-bottom: 0.5rem;
+    }
+    .car-list {
+      background: var(--card); border-radius: 12px;
+      box-shadow: var(--shadow); overflow: hidden;
+    }
+    .car-row {
+      display: block;
+      padding: 0.95rem 1rem;
+      border-bottom: 1px solid var(--border);
+      text-decoration: none;
+      color: inherit;
+      transition: background 0.08s;
+    }
+    .car-row:last-child { border-bottom: none; }
+    .car-row:active { background: #f0f0f3; }
+    .car-name { font-weight: 600; font-size: 1rem; }
+    .car-meta {
+      color: var(--muted); font-size: 0.85rem;
+      margin-top: 0.2rem; display: flex; gap: 0.6rem; flex-wrap: wrap;
+    }
+    .car-meta span:not(:last-child)::after {
+      content: '·'; margin-left: 0.6rem; color: #c8c8cc;
+    }
+    .car-activity {
+      color: #999; font-size: 0.78rem;
+      margin-top: 0.25rem;
+    }
+    .empty {
+      padding: 2.5rem 1rem; text-align: center;
+      color: var(--muted); font-size: 0.92rem;
+    }
+    .empty strong { color: var(--text); }
+    .mint-bar {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: var(--card);
+      border-top: 1px solid var(--border);
+      padding: 1rem 1.25rem;
+      box-shadow: 0 -2px 12px rgba(0,0,0,0.04);
+    }
+    .mint-btn {
+      display: block; width: 100%;
+      padding: 0.95rem;
+      background: var(--accent); color: #fff;
+      border: none; border-radius: 10px;
+      font-size: 1rem; font-weight: 600;
+      cursor: pointer; text-decoration: none;
+      text-align: center;
+    }
+    .mint-btn:active { transform: scale(0.99); }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="title">Cars</div>
+    <div class="subtitle">Per-vehicle logbooks on-chain.</div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Your Cars</div>
+    <div class="car-list" id="cars">
+      <div class="empty">Loading...</div>
+    </div>
+  </div>
+
+  <div class="mint-bar">
+    <a class="mint-btn" id="mintLink" href="">+ Mint a new car</a>
+  </div>
+
+  <script>
+    // Mount path = the agent's URL prefix. Strip a trailing slash or index.html
+    // to find it from any of: /agent/pinapp-io/cars, /, /index.html, /.
+    const MOUNT = window.location.pathname.replace(/\/(index\.html)?\/?$/, '');
+    const API = `${MOUNT}/api`;
+    document.getElementById('mintLink').href = `${MOUNT}/mint`;
+
+    function fmtTime(iso) {
+      const d = new Date(iso);
+      const diff = Date.now() - d.getTime();
+      if (diff < 60000)    return 'just now';
+      if (diff < 3600000)  return Math.floor(diff/60000) + 'm ago';
+      if (diff < 86400000) return Math.floor(diff/3600000) + 'h ago';
+      if (diff < 604800000) return Math.floor(diff/86400000) + 'd ago';
+      return d.toLocaleDateString();
+    }
+
+    async function load() {
+      const container = document.getElementById('cars');
+      try {
+        const res = await fetch(`${API}/instance`);
+        if (res.status === 401) {
+          container.innerHTML = '<div class="empty">Sign in to see your cars.</div>';
+          return;
+        }
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const { instances } = await res.json();
+        if (!instances.length) {
+          container.innerHTML = '<div class="empty"><strong>No cars yet.</strong><br>Tap below to mint your first.</div>';
+          return;
+        }
+        instances.sort((a, b) =>
+          (b.lastActivity || b.created).localeCompare(a.lastActivity || a.created)
+        );
+        container.innerHTML = instances.map(c => {
+          const f = c.fixedAttributes || {};
+          const name  = [f.year, f.make, f.model].filter(Boolean).join(' ')
+            || c.address.slice(0, 10) + '…';
+          const meta  = [f.color, f.plate, f.vin && `VIN ${f.vin}`]
+            .filter(Boolean).map(s => `<span>${s}</span>`).join('');
+          const last  = c.lastActivity || c.created;
+          const count = (c.events || []).length;
+          const activity = count
+            ? `${count} event${count === 1 ? '' : 's'} · last ${fmtTime(last)}`
+            : `minted ${fmtTime(last)}`;
+          return `<a class="car-row" href="${MOUNT}/${c.address}">
+            <div class="car-name">${name}</div>
+            ${meta ? `<div class="car-meta">${meta}</div>` : ''}
+            <div class="car-activity">${activity}</div>
+          </a>`;
+        }).join('');
+      } catch (e) {
+        container.innerHTML = `<div class="empty">Error loading cars: ${e.message}</div>`;
+      }
+    }
+
+    // Wait for epistery client (browser wallet) if it's loading; otherwise just go.
+    if (window.epistery) load();
+    else { document.addEventListener('epistery-ready', load); setTimeout(load, 400); }
+  </script>
+</body>
+</html>
