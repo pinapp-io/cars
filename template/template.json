@@ -1,0 +1,23 @@
+{
+  "id": "cars",
+  "version": "0.1.0",
+  "title": "Cars",
+  "description": "A logbook for a vehicle. VIN, photos, fueling and service history, ad-hoc events.",
+  "icon": "icon.svg",
+  "mintUrl": "mint.html",
+  "appUrl": "app.html",
+  "fixedAttributes": [
+    { "name": "year",  "label": "Year",          "type": "number", "required": true },
+    { "name": "make",  "label": "Make",          "type": "string", "required": true },
+    { "name": "model", "label": "Model",         "type": "string", "required": true },
+    { "name": "vin",   "label": "VIN",           "type": "string" },
+    { "name": "color", "label": "Color",         "type": "string" },
+    { "name": "plate", "label": "License Plate", "type": "string" }
+  ],
+  "eventTypes": [
+    { "id": "fuel",    "label": "Fuel",    "icon": "⛽" },
+    { "id": "service", "label": "Service", "icon": "🔧" },
+    { "id": "photo",   "label": "Photo",   "icon": "📷" },
+    { "id": "note",    "label": "Note",    "icon": "📝" }
+  ]
+}

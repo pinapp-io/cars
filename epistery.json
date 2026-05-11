@@ -1,0 +1,13 @@
+{
+  "name": "@pinapp-io/cars",
+  "title": "Cars",
+  "version": "0.1.0",
+  "description": "A pinapp for vehicle logbooks. One QR-stickered contract per car, with a fueling/service/photo/note timeline.",
+  "author": "pinapp-io",
+  "main": "index.mjs",
+  "icon": "/agent/pinapp-io/cars/icon.svg",
+  "permissions": [
+    "whitelist:read",
+    "ipfs:write"
+  ]
+}
