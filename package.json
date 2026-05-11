@@ -1,6 +1,6 @@
 {
   "name": "@pinapp-io/cars",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "description": "Cars — a pinapp for vehicle logbooks",
   "main": "index.mjs",
